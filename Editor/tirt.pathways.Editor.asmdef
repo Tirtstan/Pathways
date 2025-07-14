@@ -1,0 +1,16 @@
+{
+    "name": "tirt.pathways.Editor",
+    "rootNamespace": "Pathways",
+    "references": [
+        "tirt.pathways"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

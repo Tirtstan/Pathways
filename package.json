@@ -1,0 +1,31 @@
+{
+    "name": "com.tirt.pathways",
+    "version": "0.1.0",
+    "displayName": "Pathways",
+    "description": "A Unity package that provides a comprehensive set of tools to manage data file pathways and directories without handling actual data persistence. Perfect for save systems and sessions, user profiles, level data, and any scenario requiring organized file management.",
+    "unity": "2019.4",
+    "unityRelease": "0f1",
+    "documentationUrl": "https://github.com/Tirtstan/Pathways/blob/main/README.md",
+    "changelogUrl": "https://github.com/Tirtstan/Pathways/releases/latest",
+    "licensesUrl": "https://github.com/Tirtstan/Pathways/blob/main/LICENSE.md",
+    "keywords": [
+        "save",
+        "session",
+        "file",
+        "directory",
+        "path",
+        "pathway",
+        "file system"
+    ],
+    "author": {
+        "name": "Tirt",
+        "url": "https://github.com/Tirtstan"
+    },
+    "samples": [
+        {
+            "displayName": "Examples",
+            "description": "Contains examples for how to use the Pathways package.",
+            "path": "Samples/Examples"
+        }
+    ]
+}
