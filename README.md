@@ -295,7 +295,7 @@ public class GameSaveSystem : MonoBehaviour
 
 -   **Editor**: Unity Editor integration
 
-    -   [`PathwaysEditor.cs`](Editor/PathwaysEditor.cs) - Custom inspector for PathwaysManager
+    -   [`PathwaysManagerEditor.cs`](Editor/PathwaysManagerEditor.cs) - Custom inspector for PathwaysManager
 
 -   **Samples**: Example implementations
     -   [Examples](Samples/Examples/) - Complete save system example with items
