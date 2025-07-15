@@ -267,6 +267,26 @@ namespace Pathways
         public FileInfo GetMostRecentAutoSave() => CurrentPathway?.GetAutoSaves().FirstOrDefault();
 
         /// <summary>
+        /// Deletes the current pathway.
+        /// </summary>
+        /// <returns>Whether the pathway was deleted.</returns>
+        public bool DeleteCurrentPathway() => CurrentPathway?.Delete() ?? false;
+
+        /// <summary>
+        /// Checks if a file exists in the current pathway.
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <returns>Whether the file within the current pathway exists.</returns>
+        public bool FileExists(string fileName) => CurrentPathway?.FileExists(fileName) ?? false;
+
+        /// <summary>
+        /// Deletes a specific file within the current pathway.
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <returns>Whether the file within the current pathway was deleted.</returns>
+        public bool DeleteFile(string fileName) => CurrentPathway?.DeleteFile(fileName) ?? false;
+
+        /// <summary>
         /// Refreshes the file list for the current pathway.
         /// </summary>
         public void RefreshCurrentPathway() => CurrentPathway?.Refresh();

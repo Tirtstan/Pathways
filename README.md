@@ -16,9 +16,11 @@ A Unity package that provides a comprehensive set of tools to manage data file p
 
 ## Quick Start
 
-Pathways uses a `PathwaysManager` singleton to manage and interface with the API. It is automatically added to a scene and is configured to `DontDestoryOnLoad`.
+Pathways uses a `PathwaysManager` singleton to manage and interface with the API. It is automatically added to a scene and is configured to `DontDestroyOnLoad`.
 If you want, you can add an instance of it yourself within a given scene.
-`PathwaysManager` (during runtime) provides useful debug information and tooling.
+
+> [!NOTE]  
+> `PathwaysManager` (during runtime) provides useful debug information and tooling.
 
 ### Basic Setup
 
@@ -31,39 +33,38 @@ PathwaysManager.Instance.SetStorageLocation(
 );
 
 // Create or load a pathway (directory) and set it as current (true by default)
-Pathway userPathway = PathwaysManager.Instance.CreateOrLoadPathway("SaveSession1", setCurrent: true);
+Pathway pathway = PathwaysManager.Instance.CreateOrLoadPathway("SaveSession1", setCurrent: true);
 ```
 
-### Auto-Data Configuration
+### Auto-Save Configuration
 
-Set up automatic data saving with customizable intervals and slot rotation:
+Set up automatic saving with customisable intervals and slot rotation:
 
 ```csharp
 // Enable auto-data with 3 slots, saving every 2 minutes
 PathwaysManager.Instance.ToggleAutoSave(true);
-PathwaysManager.Instance.SetAutoSaveSlots(3);
+PathwaysManager.Instance.SetAutoSaveSlots(3); // cycles through 3 auto save files
 PathwaysManager.Instance.SetAutoSaveInterval(120f); // 2 minutes
 
-// Subscribe to auto-data events
-PathwaysManager.Instance.OnAutoSavePathRequested += (autoDataPath) =>
+// Subscribe to auto-save events
+PathwaysManager.Instance.OnAutoSavePathRequested += (autoSavePath) =>
 {
-    // Your data saving logic here
     string gameData = CreateGameDataJson();
-    File.WriteAllText(autoDataPath, gameData);
-    Debug.Log($"Auto-saved to: {autoDataPath}");
+    File.WriteAllText(autoSavePath, gameData);
+    Debug.Log($"Auto-saved to: {autoSavePath}");
 };
 ```
 
 ## Core Functionality
 
-### Manual Data Operations
+### Manual Operations
 
-#### Save Data To Current Pathway
+#### Save To Current Pathway
 
 ```csharp
 // Save with automatic timestamp-based filename
-string dataPath = PathwaysManager.Instance.GetManualSavePath();
-SaveGameDataToPath(dataPath);
+string savePath = PathwaysManager.Instance.GetManualSavePath();
+SaveGameDataToPath(savePath);
 
 // Save with custom filename
 string customPath = PathwaysManager.Instance.GetManualSavePath("MyCustomSave.json");
@@ -73,14 +74,14 @@ SaveGameDataToPath(customPath);
 PathwaysManager.Instance.RefreshCurrentPathway();
 ```
 
-#### Load Data To Current Pathway
+#### Load To Current Pathway
 
 ```csharp
 // Load most recent manual data file
-FileInfo recentData = PathwaysManager.Instance.GetRecentManualSaveFile();
-if (recentData != null)
+FileInfo recentFile = PathwaysManager.Instance.GetRecentManualSaveFile();
+if (recentFile != null)
 {
-    string jsonData = File.ReadAllText(recentData.FullName);
+    string jsonData = File.ReadAllText(recentFile.FullName);
     GameData data = JsonUtility.FromJson<GameData>(jsonData);
     ApplyGameData(data);
 }
@@ -100,7 +101,7 @@ if (File.Exists(specificPath))
 #### Switch Between Pathways
 
 ```csharp
-// Create or switch to a specific pathway (directory name)
+// Create or switch to a specific pathway using its pathwayId (directory name)
 Pathway levelPathway = PathwaysManager.Instance.SetCurrentPathway("SaveSession1");
 
 // Select the most recent pathway (last written to)
@@ -123,16 +124,16 @@ if (currentPathway != null)
 
 ### File Management
 
-#### Get All Data Files
+#### Get All Save Files
 
 ```csharp
 // Get all files in current pathway
 FileInfo[] allFiles = PathwaysManager.Instance.GetAllSaveFiles();
 
-// Get only manual data files (newest first)
+// Get only manual save files (newest first)
 FileInfo[] manualFiles = PathwaysManager.Instance.GetManualSaveFiles();
 
-// Get only auto-data files (newest first)
+// Get only auto-save files (newest first)
 FileInfo[] autoFiles = PathwaysManager.Instance.GetAutoSaveFiles();
 
 foreach (var file in manualFiles)
@@ -145,13 +146,13 @@ foreach (var file in manualFiles)
 
 ```csharp
 // Check if a specific file exists
-bool fileExists = PathwaysManager.Instance.CurrentPathway.FileExists("MyCustomSave.sav");
+bool fileExists = PathwaysManager.Instance.FileExists("MyCustomSave.sav");
 
 // Delete a specific data file
-bool deleted = PathwaysManager.Instance.CurrentPathway.DeleteFile("OldSave.sav");
+bool deleted = PathwaysManager.Instance.DeleteFile("OldSave.sav");
 
-// Delete entire pathway and all its files
-bool pathwayDeleted = PathwaysManager.Instance.CurrentPathway.Delete();
+// Delete current pathway and all its files
+bool pathwayDeleted = PathwaysManager.Instance.DeleteCurrentPathway();
 ```
 
 ### Advanced Features
@@ -159,7 +160,7 @@ bool pathwayDeleted = PathwaysManager.Instance.CurrentPathway.Delete();
 #### Multiple Pathway Management
 
 ```csharp
-// Get all available pathway IDs
+// Get all available pathway IDs (directory names)
 string[] allPathwayIds = PathwaysManager.Instance.GetAllPathwayIds();
 
 // Load specific pathways without switching
@@ -181,16 +182,16 @@ PathwaysManager.Instance.OnCurrentPathwayChanged += (newPathway) =>
 };
 
 // Handle auto-data requests
-PathwaysManager.Instance.OnAutoSavePathRequested += (autoDataPath) =>
+PathwaysManager.Instance.OnAutoSavePathRequested += (autoSavePath) =>
 {
-    PerformAutoSave(autoDataPath);
+    PerformAutoSave(autoSavePath);
 };
 ```
 
 #### Time Configuration
 
 ```csharp
-// Use unscaled time for auto-data (continues during pause)
+// Use unscaled time for auto-save
 PathwaysManager.Instance.SetTime(useUnscaled: true);
 
 // Manually restart the auto-save timer
@@ -201,7 +202,7 @@ PathwaysManager.Instance.RestartAutoSaveTimer();
 
 ### Global Settings
 
-Customize the global behavior through [`PathwaysGlobalConfigs`](Runtime/PathwaysGlobalConfigs.cs):
+Customise the global behaviour through [`PathwaysGlobalConfigs`](Runtime/PathwaysGlobalConfigs.cs):
 
 > [!NOTE]  
 > It is recommended to set `PathwaysGlobalConfigs.StorageLocation` using `PathwaysManager.SetStorageLocation(string)` as it will refresh the stored pathways automatically.
@@ -210,7 +211,7 @@ Customize the global behavior through [`PathwaysGlobalConfigs`](Runtime/Pathways
 // Set custom file extension
 PathwaysGlobalConfigs.SaveExtension = "json";
 
-// Change auto-data prefix
+// Change auto-save prefix
 PathwaysGlobalConfigs.AutoSavePrefix = "autosave_";
 
 // Set default storage location
