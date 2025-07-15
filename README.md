@@ -216,6 +216,8 @@ PathwaysGlobalConfigs.AutoSavePrefix = "autosave_";
 
 // Set default storage location
 PathwaysGlobalConfigs.StorageLocation = Path.Combine(Application.persistentDataPath, "MyGame");
+// OR (will auto refresh pathways)
+PathwaysManager.Instance.SetStorageLocation(Path.Combine(Application.persistentDataPath, "GameData"));
 ```
 
 ## Example Implementation
