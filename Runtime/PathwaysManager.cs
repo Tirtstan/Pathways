@@ -34,7 +34,7 @@ namespace Pathways
         }
 
         public Pathway CurrentPathway { get; private set; }
-        public bool CanAutoSave { get; private set; }
+        public bool IsAutoSaveEnabled { get; private set; }
         public int AutoSaveSlots
         {
             get => CurrentPathway?.AutoSaveSlots ?? 0;
@@ -81,7 +81,7 @@ namespace Pathways
             if (CurrentPathway == null)
                 return;
 
-            if (CanAutoSave)
+            if (CanAutoSave())
             {
                 autoSaveTimer += UseUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
                 if (autoSaveTimer >= AutoSaveInterval)
@@ -123,10 +123,18 @@ namespace Pathways
         }
 
         /// <summary>
+        /// Checks if auto-saving is enabled and if the current pathway is valid for auto-saving.
+        /// Checks if auto-save slots and interval are set correctly (greater than 0).
+        /// </summary>
+        /// <returns>True if auto-saving can proceed, false otherwise.</returns>
+        public bool CanAutoSave() =>
+            IsAutoSaveEnabled && CurrentPathway != null && AutoSaveSlots > 0 && AutoSaveInterval > 0f;
+
+        /// <summary>
         /// Sets whether auto-saving is enabled for the current pathway.
         /// </summary>
         /// <param name="enabled">To enable or disable auto-saving.</param>
-        public void ToggleAutoSave(bool enabled) => CanAutoSave = enabled;
+        public void ToggleAutoSave(bool enabled) => IsAutoSaveEnabled = enabled;
 
         /// <summary>
         /// Sets the number of auto-save slots to use for the current pathway.
