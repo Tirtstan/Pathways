@@ -215,9 +215,9 @@ PathwaysGlobalConfigs.SaveExtension = "json";
 PathwaysGlobalConfigs.AutoSavePrefix = "autosave_";
 
 // Set default storage location
-PathwaysGlobalConfigs.StorageLocation = Path.Combine(Application.persistentDataPath, "MyGame");
+PathwaysGlobalConfigs.StorageLocation = Path.Combine(Application.persistentDataPath, "Saves");
 // OR (will auto refresh pathways)
-PathwaysManager.Instance.SetStorageLocation(Path.Combine(Application.persistentDataPath, "GameData"));
+PathwaysManager.Instance.SetStorageLocation(Path.Combine(Application.persistentDataPath, "Saves"));
 ```
 
 ## Example Implementation
