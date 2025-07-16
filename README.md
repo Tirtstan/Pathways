@@ -22,6 +22,12 @@ If you want, you can add an instance of it yourself within a given scene.
 > [!NOTE]  
 > `PathwaysManager` (during runtime) provides useful debug information and tooling.
 
+### Install via git...
+
+```console
+https://github.com/Tirtstan/Pathways.git
+```
+
 ### Basic Setup
 
 Optionally configure basic settings:
