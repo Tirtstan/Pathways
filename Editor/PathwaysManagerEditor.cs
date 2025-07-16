@@ -82,11 +82,12 @@ namespace Pathways.Editor
                     GUILayout.Width(120)
                 );
 
-                string autoSaveStatus = manager.IsAutoSaveEnabled
-                    ? $"ON ({manager.AutoSaveSlots} slots, {manager.AutoSaveInterval}s)"
-                    : "OFF";
+                string autoSaveStatus = manager.CanAutoSave() ? $"ON" : "OFF";
                 EditorGUILayout.LabelField("Auto-Save:", GUILayout.Width(80));
-                EditorGUILayout.LabelField(autoSaveStatus, monoStyle);
+                EditorGUILayout.LabelField(
+                    $"{autoSaveStatus} ({manager.AutoSaveSlots} slots, {manager.AutoSaveInterval}s)",
+                    monoStyle
+                );
                 EditorGUILayout.EndHorizontal();
 
                 EditorGUILayout.BeginHorizontal();
