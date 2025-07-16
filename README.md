@@ -40,6 +40,9 @@ Pathway pathway = PathwaysManager.Instance.CreateOrLoadPathway("SaveSession1", s
 
 Set up automatic saving with customisable intervals and slot rotation:
 
+> [!NOTE]  
+> `PathwaysManager` will only send an auto-save event (`OnAutoSavePathRequested`) if `AutoSaveSlots` and `AutoSaveInterval` are greater than 0.
+
 ```csharp
 // Enable auto-data with 3 slots, saving every 2 minutes
 PathwaysManager.Instance.ToggleAutoSave(true);
