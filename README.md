@@ -40,6 +40,9 @@ Pathway pathway = PathwaysManager.Instance.CreateOrLoadPathway("SaveSession1", s
 
 Set up automatic saving with customisable intervals and slot rotation:
 
+> [!NOTE]  
+> `PathwaysManager` will only send an auto-save event (`OnAutoSavePathRequested`) if `AutoSaveSlots` and `AutoSaveInterval` are greater than 0.
+
 ```csharp
 // Enable auto-data with 3 slots, saving every 2 minutes
 PathwaysManager.Instance.ToggleAutoSave(true);
@@ -87,7 +90,7 @@ if (recentFile != null)
 }
 
 // Load specific data file
-string specificPath = PathwaysManager.Instance.GetManualSavePath("MyCustomSave");
+string specificPath = PathwaysManager.Instance.GetManualSavePath("MyCustomSave.json");
 if (File.Exists(specificPath))
 {
     string jsonData = File.ReadAllText(specificPath);
@@ -295,7 +298,7 @@ public class GameSaveSystem : MonoBehaviour
 
 -   **Editor**: Unity Editor integration
 
-    -   [`PathwaysEditor.cs`](Editor/PathwaysEditor.cs) - Custom inspector for PathwaysManager
+    -   [`PathwaysManagerEditor.cs`](Editor/PathwaysManagerEditor.cs) - Custom inspector for PathwaysManager
 
 -   **Samples**: Example implementations
     -   [Examples](Samples/Examples/) - Complete save system example with items
