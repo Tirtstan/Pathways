@@ -87,7 +87,7 @@ if (recentFile != null)
 }
 
 // Load specific data file
-string specificPath = PathwaysManager.Instance.GetManualSavePath("MyCustomSave");
+string specificPath = PathwaysManager.Instance.GetManualSavePath("MyCustomSave.json");
 if (File.Exists(specificPath))
 {
     string jsonData = File.ReadAllText(specificPath);
