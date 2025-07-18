@@ -1,13 +1,13 @@
 # Pathways
 
-A Unity package that provides a comprehensive set of tools to manage data file pathways and directories without handling actual data persistence. Perfect for save systems and sessions, user profiles, level data, and any scenario requiring organized file management.
+A Unity package for managing data file pathways and directories without handling actual data persistence. Perfect for save systems and sessions, user profiles, level data, and any scenario requiring organized file management. Perfect for save systems and sessions, user profiles, level data, and any scenario requiring organized file management.
 
 ## Features
 
--   **Pathway Management**: Create and manage data with `Pathway` (directories).
--   **Auto-Data System**: Automatic data saving through events with configurable slots and intervals.
+-   **Pathway Management**: Create and manage data with `PathwaysManager`.
+-   **Auto-Save System**: Automatic data saving through events with configurable slots and intervals.
 -   **Manual Data Operations**: Full control over manual data saving and loading.
--   **File Organization**: Separate manual and auto-data files with default or custom naming.
+-   **File Organization**: Separate manual and auto-save files with default or custom naming.
 -   **Recent Pathway Selection**: Quickly switch to the most recently used `Pathway`.
 
 ## Requirements
@@ -19,10 +19,12 @@ A Unity package that provides a comprehensive set of tools to manage data file p
 Pathways uses a `PathwaysManager` singleton to manage and interface with the API. It is automatically added to a scene and is configured to `DontDestroyOnLoad`.
 If you want, you can add an instance of it yourself within a given scene.
 
-> [!NOTE]  
-> `PathwaysManager` (during runtime) provides useful debug information and tooling.
+> [!TIP]  
+> `PathwaysManager` inspector view (during runtime) provides useful debug information and tooling.
 
 ### Install via git...
+
+`Package Manager > Add/Plus Symbol > Install package via git...`
 
 ```console
 https://github.com/Tirtstan/Pathways.git
@@ -46,14 +48,9 @@ Pathway pathway = PathwaysManager.Instance.CreateOrLoadPathway("SaveSession1", s
 
 Set up automatic saving with customisable intervals and slot rotation:
 
-> [!NOTE]  
-> `PathwaysManager` will only send an auto-save event (`OnAutoSavePathRequested`) if `AutoSaveSlots` and `AutoSaveInterval` are greater than 0.
-
 ```csharp
-// Enable auto-data with 3 slots, saving every 2 minutes
-PathwaysManager.Instance.ToggleAutoSave(true);
-PathwaysManager.Instance.SetAutoSaveSlots(3); // cycles through 3 auto save files
-PathwaysManager.Instance.SetAutoSaveInterval(120f); // 2 minutes
+// Enable auto-save with 3 slots (default), saving every 2 minutes
+PathwaysManager.Instance.ToggleAutoSave(enable: true, slots: 3, interval: 120f);
 
 // Subscribe to auto-save events
 PathwaysManager.Instance.OnAutoSavePathRequested += (autoSavePath) =>
@@ -63,6 +60,9 @@ PathwaysManager.Instance.OnAutoSavePathRequested += (autoSavePath) =>
     Debug.Log($"Auto-saved to: {autoSavePath}");
 };
 ```
+
+> [!NOTE]  
+> `PathwaysManager` will only send an auto-save event (`OnAutoSavePathRequested`) if `AutoSaveSlots > 0 && AutoSaveInterval > 0`.
 
 ## Core Functionality
 
@@ -86,8 +86,8 @@ PathwaysManager.Instance.RefreshCurrentPathway();
 #### Load To Current Pathway
 
 ```csharp
-// Load most recent manual data file
-FileInfo recentFile = PathwaysManager.Instance.GetRecentManualSaveFile();
+// Load most recent data file (last written to)
+FileInfo recentFile = PathwaysManager.Instance.GetRecentSaveFile();
 if (recentFile != null)
 {
     string jsonData = File.ReadAllText(recentFile.FullName);
@@ -190,7 +190,7 @@ PathwaysManager.Instance.OnCurrentPathwayChanged += (newPathway) =>
     UpdateUI();
 };
 
-// Handle auto-data requests
+// Handle auto-save requests
 PathwaysManager.Instance.OnAutoSavePathRequested += (autoSavePath) =>
 {
     PerformAutoSave(autoSavePath);
@@ -214,7 +214,7 @@ PathwaysManager.Instance.RestartAutoSaveTimer();
 Customise the global behaviour through [`PathwaysGlobalConfigs`](Runtime/PathwaysGlobalConfigs.cs):
 
 > [!NOTE]  
-> It is recommended to set `PathwaysGlobalConfigs.StorageLocation` using `PathwaysManager.SetStorageLocation(string)` as it will refresh the stored pathways automatically.
+> It is recommended to set `PathwaysGlobalConfigs.StorageLocation` using `PathwaysManager.SetStorageLocation(string)` as it will refresh the pathways automatically.
 
 ```csharp
 // Set custom file extension
@@ -223,9 +223,7 @@ PathwaysGlobalConfigs.SaveExtension = "json";
 // Change auto-save prefix
 PathwaysGlobalConfigs.AutoSavePrefix = "autosave_";
 
-// Set default storage location
-PathwaysGlobalConfigs.StorageLocation = Path.Combine(Application.persistentDataPath, "Saves");
-// OR (will auto refresh pathways)
+// Set default storage location (will auto refresh pathways)
 PathwaysManager.Instance.SetStorageLocation(Path.Combine(Application.persistentDataPath, "Saves"));
 ```
 
@@ -245,7 +243,7 @@ public class GameSaveSystem : MonoBehaviour
     private void InitializePathways()
     {
         PathwaysManager.Instance.SetStorageLocation(
-            Path.Combine(Application.persistentDataPath, "GameSaves")
+            Path.Combine(Application.persistentDataPath, "Saves")
         );
 
         // Create or load pathway
@@ -270,7 +268,7 @@ public class GameSaveSystem : MonoBehaviour
 
     public void LoadGame()
     {
-        FileInfo recentSave = PathwaysManager.Instance.GetRecentManualSaveFile();
+        FileInfo recentSave = PathwaysManager.Instance.GetRecentSaveFile();
         if (recentSave != null)
         {
             LoadGameFromPath(recentSave.FullName);
@@ -298,18 +296,18 @@ public class GameSaveSystem : MonoBehaviour
 
 -   **Runtime**: Core pathway management functionality
 
-    -   [`Pathway.cs`](Runtime/Pathway.cs) - Individual pathway management
-    -   [`PathwaysManager.cs`](Runtime/PathwaysManager.cs) - Central singleton manager and auto-save system
-    -   [`PathwaysGlobalConfigs.cs`](Runtime/PathwaysGlobalConfigs.cs) - Global configuration settings
+    -   [`Pathway.cs`](Runtime/Pathway.cs) - Individual pathway management.
+    -   [`PathwaysManager.cs`](Runtime/PathwaysManager.cs) - Central singleton manager and auto-save system.
+    -   [`PathwaysGlobalConfigs.cs`](Runtime/PathwaysGlobalConfigs.cs) - Global configuration settings.
 
 -   **Editor**: Unity Editor integration
 
-    -   [`PathwaysManagerEditor.cs`](Editor/PathwaysManagerEditor.cs) - Custom inspector for PathwaysManager
+    -   [`PathwaysManagerEditor.cs`](Editor/PathwaysManagerEditor.cs) - Custom inspector for PathwaysManager.
 
 -   **Samples**: Example implementations
-    -   [Examples](Samples/Examples/) - Complete save system example with items
+    -   [Examples](Samples/Examples/) - Complete save system example with saveable items.
 
 ## Tips and Best Practices
 
-1. **Always refresh**: Call `PathwaysManager.Instance.RefreshCurrentPathway()` after saving to update file lists.
+1. **Always refresh**: Call `PathwaysManager.Instance.Refresh()` and/or `PathwaysManager.Instance.RefreshCurrentPathway()` after saving to update pathway and file lists.
 2. **Error handling**: Check for null pathways and file existence before operations.

@@ -14,11 +14,8 @@ public class SaveManager : MonoBehaviour
     {
         PathwaysManager.Instance.OnAutoSavePathRequested += OnAutoDataPathRequested;
 
-        PathwaysManager.Instance.ToggleAutoSave(true);
-        PathwaysManager.Instance.SetAutoSaveSlots(3);
-        PathwaysManager.Instance.SetAutoSaveInterval(120f);
-
-        PathwaysManager.Instance.SetStorageLocation(Path.Combine(Application.persistentDataPath, "GameData"));
+        PathwaysManager.Instance.ToggleAutoSave(enable: true, slots: 3, interval: 300f);
+        PathwaysManager.Instance.SetStorageLocation(Path.Combine(Application.persistentDataPath, "Saves"));
     }
 
     private void Update()
@@ -49,6 +46,7 @@ public class SaveManager : MonoBehaviour
             Item item = Instantiate(itemPrefab, Random.insideUnitCircle * 5f, Quaternion.identity);
             item.RandomiseProperties();
         }
+
         Debug.Log("Created 10 random items");
     }
 
@@ -83,12 +81,13 @@ public class SaveManager : MonoBehaviour
     {
         if (string.IsNullOrEmpty(fileName))
         {
-            FileInfo recentData = PathwaysManager.Instance.GetRecentManualSaveFile();
+            FileInfo recentData = PathwaysManager.Instance.GetRecentSaveFile();
             if (recentData == null)
             {
                 Debug.LogWarning("No data file found!");
                 return null;
             }
+
             return recentData.FullName;
         }
         else
@@ -99,6 +98,7 @@ public class SaveManager : MonoBehaviour
                 Debug.LogWarning($"Data file not found: {fileName}");
                 return null;
             }
+
             return loadPath;
         }
     }
@@ -132,6 +132,7 @@ public class SaveManager : MonoBehaviour
                 new Vector2(itemData.PositionX, itemData.PositionY),
                 Quaternion.identity
             );
+
             item.SetData(itemData);
         }
     }

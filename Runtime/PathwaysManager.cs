@@ -33,19 +33,15 @@ namespace Pathways
             }
         }
 
-        public Pathway CurrentPathway { get; private set; }
         public bool IsAutoSaveEnabled { get; private set; }
         public int AutoSaveSlots
         {
-            get => CurrentPathway?.AutoSaveSlots ?? 0;
-            private set
-            {
-                if (CurrentPathway != null)
-                    CurrentPathway.AutoSaveSlots = value;
-            }
+            get => PathwaysGlobalConfigs.AutoSaveSlots;
+            private set => PathwaysGlobalConfigs.AutoSaveSlots = value;
         }
         public float AutoSaveInterval { get; private set; }
         public bool UseUnscaledTime { get; private set; }
+        public Pathway CurrentPathway { get; private set; }
 
         private readonly Dictionary<string, Pathway> loadedPathways = new();
         private float autoSaveTimer;
@@ -53,12 +49,10 @@ namespace Pathways
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void InitializeSingletonOnLoad()
         {
-            Instance = FindFirstObjectByType<PathwaysManager>();
-
-            if (Instance == null)
+            if (FindFirstObjectByType<PathwaysManager>() == null)
             {
                 var singletonObject = new GameObject(typeof(PathwaysManager).Name);
-                Instance = singletonObject.AddComponent<PathwaysManager>();
+                singletonObject.AddComponent<PathwaysManager>();
             }
         }
 
@@ -99,9 +93,9 @@ namespace Pathways
         public void SetStorageLocation(string location) => StorageLocation = location;
 
         /// <summary>
-        /// Creates or loads a pathway with the given ID. By default, when created, that pathway becomes the current pathway.
+        /// Creates or loads a pathway with the given ID. By default, the loaded/created pathway becomes the current pathway.
         /// </summary>
-        /// <param name="pathwayId">The pathway identifier.</param>
+        /// <param name="pathwayId">The pathway identifier (directory name).</param>
         /// <param name="setCurrent">If true, sets this pathway as the current pathway.</param>
         /// <returns>The Pathway instance.</returns>
         public Pathway CreateOrLoadPathway(string pathwayId, bool setCurrent = true)
@@ -133,20 +127,27 @@ namespace Pathways
         /// <summary>
         /// Sets whether auto-saving is enabled for the current pathway.
         /// </summary>
-        /// <param name="enabled">To enable or disable auto-saving.</param>
-        public void ToggleAutoSave(bool enabled) => IsAutoSaveEnabled = enabled;
+        /// <param name="enable">To enable or disable auto-saving.</param>
+        /// <param name="slots">Number of auto-save slots to use. Defaults to 3.</param>
+        /// <param name="interval">Auto-save interval in seconds. Defaults to 300 seconds (5 minutes).</param>
+        public void ToggleAutoSave(bool enable, int slots = 3, float interval = 300f)
+        {
+            IsAutoSaveEnabled = enable;
+            SetAutoSaveSlots(slots);
+            SetAutoSaveInterval(interval);
+        }
 
         /// <summary>
         /// Sets the number of auto-save slots to use for the current pathway.
         /// </summary>
         /// <param name="slots">The number of auto-save slots to cycle through.</param>
-        public void SetAutoSaveSlots(int slots = 3) => AutoSaveSlots = slots;
+        public void SetAutoSaveSlots(int slots) => AutoSaveSlots = slots;
 
         /// <summary>
         /// Sets the auto-save interval (seconds) to use for the current pathway.
         /// </summary>
-        /// <param name="interval">The auto-save interval in seconds. Defaults to 300 seconds (5 minutes).</param>
-        public void SetAutoSaveInterval(float interval = 300f) => AutoSaveInterval = interval;
+        /// <param name="interval">The auto-save interval in seconds.</param>
+        public void SetAutoSaveInterval(float interval) => AutoSaveInterval = interval;
 
         /// <summary>
         /// Restarts the auto-save timer.
@@ -160,7 +161,7 @@ namespace Pathways
         public void SetTime(bool useUnscaled) => UseUnscaledTime = useUnscaled;
 
         /// <summary>
-        /// Selects and sets the most recent (last saved to) pathway as the current active pathway.
+        /// Selects and sets the most recent (last saved to) pathway as the current pathway.
         /// If no recent pathway exists, returns null.
         /// </summary>
         /// <returns>The most recent Pathway instance, or null if none found.</returns>
@@ -178,9 +179,9 @@ namespace Pathways
         }
 
         /// <summary>
-        /// Sets the current active pathway, creating a new one if not found within already loaded pathways.
+        /// Sets the current pathway, creating a new one if not found within already loaded pathways.
         /// </summary>
-        /// <param name="pathwayId">The ID of the pathway to make active.</param>
+        /// <param name="pathwayId">The ID of the pathway to make current.</param>
         public Pathway SetCurrentPathway(string pathwayId)
         {
             Pathway pathway = CreateOrLoadPathway(pathwayId);
@@ -190,10 +191,10 @@ namespace Pathways
         }
 
         /// <summary>
-        /// Sets the current active pathway.
+        /// Sets the current pathway.
         /// </summary>
-        /// <param name="pathway">The pathway to make active.</param>
-        private Pathway SetCurrentPathway(Pathway pathway) // private as the pathway may be not in the loaded, use above then
+        /// <param name="pathway">The pathway to make current.</param>
+        private Pathway SetCurrentPathway(Pathway pathway)
         {
             CurrentPathway = pathway;
             autoSaveTimer = 0f;
@@ -203,9 +204,9 @@ namespace Pathways
         }
 
         /// <summary>
-        /// Gets all available save pathways.
+        /// Gets all available pathway ids.
         /// </summary>
-        /// <returns>Array of pathway directory names (ids).</returns>
+        /// <returns>Array of pathway ids (directory names).</returns>
         public string[] GetAllPathwayIds()
         {
             var storageDir = new DirectoryInfo(StorageLocation);
@@ -219,19 +220,19 @@ namespace Pathways
         /// Gets the path for a manual save in the current pathway.
         /// </summary>
         /// <param name="fileName">Optional filename, defaults to timestamp-based name.</param>
-        /// <returns>Full path for the save file, or null if no pathway is active.</returns>
+        /// <returns>Full path for the save file, or null if no pathway is current.</returns>
         public string GetManualSavePath(string fileName = null) => CurrentPathway?.GetSavePath(fileName);
 
         /// <summary>
         /// Gets the path for an auto-save in the current pathway.
         /// </summary>
-        /// <returns>Full path for the auto-save file, or null if no pathway is active.</returns>
+        /// <returns>Full path for the auto-save file, or null if no pathway is current.</returns>
         public string GetAutoSavePath() => CurrentPathway?.GetAutoSavePath();
 
         /// <summary>
         /// Requests the path for an auto-save and notifies subscribers.
         /// </summary>
-        /// <returns>The auto-save path, or null if no pathway is active.</returns>
+        /// <returns>The auto-save path, or null if no pathway is current.</returns>
         public string RequestAutoSavePath()
         {
             if (CurrentPathway == null)
@@ -247,20 +248,26 @@ namespace Pathways
         /// <summary>
         /// Gets all save files in the current pathway.
         /// </summary>
-        /// <returns>Array of FileInfo objects, or empty if no pathway is active.</returns>
+        /// <returns>Array of FileInfo objects, or empty if no pathway is current.</returns>
         public FileInfo[] GetAllSaveFiles() => CurrentPathway?.Files ?? new FileInfo[0];
 
         /// <summary>
         /// Gets all manual save files in the current pathway.
         /// </summary>
-        /// <returns>Array of FileInfo objects, or empty if no pathway is active.</returns>
+        /// <returns>Array of FileInfo objects, or empty if no pathway is current.</returns>
         public FileInfo[] GetManualSaveFiles() => CurrentPathway?.GetManualSaves() ?? new FileInfo[0];
 
         /// <summary>
         /// Gets all auto-save files in the current pathway.
         /// </summary>
-        /// <returns>Array of FileInfo objects, or empty if no pathway is active.</returns>
+        /// <returns>Array of FileInfo objects, or empty if no pathway is current.</returns>
         public FileInfo[] GetAutoSaveFiles() => CurrentPathway?.GetAutoSaves() ?? new FileInfo[0];
+
+        /// <summary>
+        /// Gets the most recent save file info from the current pathway based on last write time.
+        /// </summary>
+        /// <returns>FileInfo of the most recent save file, or null if no pathway is current.</returns>
+        public FileInfo GetRecentSaveFile() => CurrentPathway?.RecentFile ?? null;
 
         /// <summary>
         /// Gets the most recent manual save file info.
@@ -272,13 +279,7 @@ namespace Pathways
         /// Gets the most recent auto-save file info.
         /// </summary>
         /// <returns>FileInfo of most recent auto-save, or null if none exists.</returns>
-        public FileInfo GetMostRecentAutoSave() => CurrentPathway?.GetAutoSaves().FirstOrDefault();
-
-        /// <summary>
-        /// Deletes the current pathway.
-        /// </summary>
-        /// <returns>Whether the pathway was deleted.</returns>
-        public bool DeleteCurrentPathway() => CurrentPathway?.Delete() ?? false;
+        public FileInfo GetRecentAutoSaveFile() => CurrentPathway?.GetAutoSaves().FirstOrDefault();
 
         /// <summary>
         /// Checks if a file exists in the current pathway.
@@ -288,11 +289,31 @@ namespace Pathways
         public bool FileExists(string fileName) => CurrentPathway?.FileExists(fileName) ?? false;
 
         /// <summary>
-        /// Deletes a specific file within the current pathway.
+        /// Deletes the current pathway. If successful, refreshes the pathways list.
+        /// </summary>
+        /// <returns>Whether the pathway was deleted.</returns>
+        public bool DeleteCurrentPathway()
+        {
+            bool success = CurrentPathway?.Delete() ?? false;
+            if (success)
+                Refresh();
+
+            return success;
+        }
+
+        /// <summary>
+        /// Deletes a specific file within the current pathway. If successful, refreshes the current pathway.
         /// </summary>
         /// <param name="fileName"></param>
         /// <returns>Whether the file within the current pathway was deleted.</returns>
-        public bool DeleteFile(string fileName) => CurrentPathway?.DeleteFile(fileName) ?? false;
+        public bool DeleteFile(string fileName)
+        {
+            bool success = CurrentPathway?.DeleteFile(fileName) ?? false;
+            if (success)
+                RefreshCurrentPathway();
+
+            return success;
+        }
 
         /// <summary>
         /// Refreshes the file list for the current pathway.
@@ -300,11 +321,12 @@ namespace Pathways
         public void RefreshCurrentPathway() => CurrentPathway?.Refresh();
 
         /// <summary>
-        /// Refreshes through <see cref="StorageLocation"/> to get all pathways.
+        /// Searches through <see cref="StorageLocation"/> to get all pathways.
         /// </summary>
         public void Refresh()
         {
             loadedPathways.Clear();
+            CurrentPathway = null;
 
             string[] pathwayIds = GetAllPathwayIds();
             foreach (var pathwayId in pathwayIds)

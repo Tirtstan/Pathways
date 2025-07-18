@@ -74,15 +74,12 @@ namespace Pathways.Editor
             if (currentPathway != null)
             {
                 EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField("ID:", GUILayout.Width(60));
-                EditorGUILayout.SelectableLabel(
-                    currentPathway.PathwayId,
-                    monoStyle,
-                    GUILayout.Height(18),
-                    GUILayout.Width(120)
-                );
+                EditorGUILayout.LabelField("ID:", GUILayout.Width(80));
+                EditorGUILayout.SelectableLabel(currentPathway.PathwayId, monoStyle, GUILayout.Height(18));
+                EditorGUILayout.EndHorizontal();
 
-                string autoSaveStatus = manager.CanAutoSave() ? $"ON" : "OFF";
+                EditorGUILayout.BeginHorizontal();
+                string autoSaveStatus = manager.CanAutoSave() ? "ON" : "OFF";
                 EditorGUILayout.LabelField("Auto-Save:", GUILayout.Width(80));
                 EditorGUILayout.LabelField(
                     $"{autoSaveStatus} ({manager.AutoSaveSlots} slots, {manager.AutoSaveInterval}s)",
@@ -91,20 +88,23 @@ namespace Pathways.Editor
                 EditorGUILayout.EndHorizontal();
 
                 EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField("Files:", GUILayout.Width(60));
+                EditorGUILayout.LabelField("File Count:", GUILayout.Width(80));
                 EditorGUILayout.LabelField($"{currentPathway.FileCount}", monoStyle, GUILayout.Width(30));
+                EditorGUILayout.EndHorizontal();
 
+                EditorGUILayout.BeginHorizontal();
                 int maxFileCount = 35;
                 string recentFileName = currentPathway.RecentFile?.Name ?? "None";
                 if (recentFileName.Length > maxFileCount)
                     recentFileName = "..." + recentFileName[^(maxFileCount - 3)..];
 
-                EditorGUILayout.LabelField($"Recent: {recentFileName}", monoStyle);
+                EditorGUILayout.LabelField($"Recent:", GUILayout.Width(80));
+                EditorGUILayout.LabelField($"{recentFileName}", monoStyle);
                 EditorGUILayout.EndHorizontal();
 
                 EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField("Path:", GUILayout.Width(60));
-                EditorGUILayout.SelectableLabel(currentPathway.Path, monoStyle, GUILayout.Height(18));
+                EditorGUILayout.LabelField("Path:", GUILayout.Width(80));
+                EditorGUILayout.SelectableLabel(currentPathway.FullPath, monoStyle, GUILayout.Height(18));
                 EditorGUILayout.EndHorizontal();
             }
             else
@@ -131,9 +131,9 @@ namespace Pathways.Editor
             else
             {
                 EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField("Pathway ID", EditorStyles.miniBoldLabel, GUILayout.Width(150));
+                EditorGUILayout.LabelField("📁 Pathway ID", EditorStyles.miniBoldLabel, GUILayout.Width(150));
                 EditorGUILayout.LabelField("Files", EditorStyles.miniBoldLabel, GUILayout.Width(40));
-                EditorGUILayout.LabelField("Recent File", EditorStyles.miniBoldLabel);
+                EditorGUILayout.LabelField("📂 Recent File", EditorStyles.miniBoldLabel);
                 EditorGUILayout.EndHorizontal();
 
                 Rect rect = GUILayoutUtility.GetRect(0, 1, GUILayout.ExpandWidth(true));
@@ -174,7 +174,7 @@ namespace Pathways.Editor
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("Refresh", buttonStyle, GUILayout.Height(28)))
             {
-                manager.RefreshCurrentPathway();
+                manager.Refresh();
                 Repaint();
             }
 

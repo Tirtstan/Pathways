@@ -5,7 +5,7 @@ using System.Linq;
 namespace Pathways
 {
     /// <summary>
-    /// Manages directories (a 'pathway') and file locations without handling actual data persistence.
+    /// Manages a directory (a 'pathway') and file locations without handling actual data persistence.
     /// </summary>
     public class Pathway
     {
@@ -14,12 +14,11 @@ namespace Pathways
         /// </summary>
         public string PathwayId { get; set; }
         public FileInfo[] Files { get; private set; }
-        public int AutoSaveSlots { get; set; }
 
         /// <summary>
         /// Full path to the pathway directory.
         /// </summary>
-        public string Path => System.IO.Path.Combine(PathwaysGlobalConfigs.StorageLocation, PathwayId);
+        public string FullPath => Path.Combine(PathwaysGlobalConfigs.StorageLocation, PathwayId);
         public int FileCount => Files?.Length ?? 0;
 
         /// <summary>
@@ -36,11 +35,11 @@ namespace Pathways
 
         /// <summary>
         /// Gets the full path for a manual save file.
+        /// This method triggers directory creation if it doesn't exist.
         /// </summary>
         /// <param name="fileName">Optional filename, defaults to timestamp-based name.</param>
         /// <returns>Full path for the save file.</returns>
         /// <remarks>
-        /// This method call triggers directory creation if it doesn't exist.
         /// If no filename is provided, a default name based on the current timestamp will be used, see <see cref="PathwaysGlobalConfigs"/>.
         /// </remarks>
         public string GetSavePath(string fileName = null)
@@ -50,11 +49,12 @@ namespace Pathways
             if (string.IsNullOrEmpty(fileName))
                 fileName = GetDefaultFileName();
 
-            return System.IO.Path.Combine(Path, fileName);
+            return Path.Combine(FullPath, fileName);
         }
 
         /// <summary>
         /// Gets the full path for the next auto-save file, cycling through available slots.
+        /// This method triggers directory creation if it doesn't exist.
         /// </summary>
         /// <returns>Full path for the auto-save file.</returns>
         public string GetAutoSavePath()
@@ -63,7 +63,7 @@ namespace Pathways
 
             int nextSlot = GetNextAutoSaveSlot();
             string fileName = GetAutoSaveFileName(nextSlot);
-            return System.IO.Path.Combine(Path, fileName);
+            return Path.Combine(FullPath, fileName);
         }
 
         /// <summary>
@@ -71,7 +71,7 @@ namespace Pathways
         /// </summary>
         /// <param name="fileName">Name of the file.</param>
         /// <returns>Full path to the file.</returns>
-        public string GetFilePath(string fileName) => System.IO.Path.Combine(Path, fileName);
+        public string GetFilePath(string fileName) => Path.Combine(FullPath, fileName);
 
         /// <summary>
         /// Checks if a save file exists.
@@ -129,7 +129,7 @@ namespace Pathways
         /// <returns>True if file was deleted, false if it didn't exist.</returns>
         public bool DeleteFile(string fileName)
         {
-            string filePath = System.IO.Path.Combine(Path, fileName);
+            string filePath = Path.Combine(FullPath, fileName);
             if (File.Exists(filePath))
             {
                 File.Delete(filePath);
@@ -146,9 +146,9 @@ namespace Pathways
         /// <returns>True if the pathway directory was deleted, false if it didn't exist.</returns>
         public bool Delete()
         {
-            if (Directory.Exists(Path))
+            if (Directory.Exists(FullPath))
             {
-                Directory.Delete(Path, true);
+                Directory.Delete(FullPath, true);
                 Files = new FileInfo[0];
 
                 return true;
@@ -169,13 +169,13 @@ namespace Pathways
         public DirectoryInfo GetDirectoryInfo()
         {
             EnsureDirectoryExists();
-            return new DirectoryInfo(Path);
+            return new DirectoryInfo(FullPath);
         }
 
         private void EnsureDirectoryExists()
         {
-            if (!Directory.Exists(Path))
-                Directory.CreateDirectory(Path);
+            if (!Directory.Exists(FullPath))
+                Directory.CreateDirectory(FullPath);
         }
 
         private int GetNextAutoSaveSlot()
@@ -184,18 +184,20 @@ namespace Pathways
             if (autoSaves.Length == 0)
                 return 1;
 
-            if (autoSaves.Length < AutoSaveSlots)
+            int autoSaveSlots = PathwaysGlobalConfigs.AutoSaveSlots;
+
+            if (autoSaves.Length < autoSaveSlots)
             {
                 int[] usedSlots = autoSaves
                     .Select(f =>
                     {
-                        string name = System.IO.Path.GetFileNameWithoutExtension(f.Name);
+                        string name = Path.GetFileNameWithoutExtension(f.Name);
                         string[] parts = name.Split('_');
                         return int.TryParse(parts.Last(), out int slot) ? slot : 0;
                     })
                     .ToArray();
 
-                for (int i = 1; i <= AutoSaveSlots; i++)
+                for (int i = 1; i <= autoSaveSlots; i++)
                 {
                     if (!usedSlots.Contains(i))
                         return i;
@@ -204,7 +206,7 @@ namespace Pathways
 
             // cycle through existing slots, use the oldest one
             FileInfo oldestAutoSave = autoSaves.OrderBy(f => f.LastWriteTime).First();
-            string oldestName = System.IO.Path.GetFileNameWithoutExtension(oldestAutoSave.Name);
+            string oldestName = Path.GetFileNameWithoutExtension(oldestAutoSave.Name);
             string[] parts = oldestName.Split('_');
             return int.TryParse(parts.Last(), out int oldestSlot) ? oldestSlot : 1;
         }
@@ -214,7 +216,7 @@ namespace Pathways
             if (string.IsNullOrEmpty(PathwayId))
                 return new FileInfo[0];
 
-            var directory = new DirectoryInfo(Path);
+            var directory = new DirectoryInfo(FullPath);
             if (!directory.Exists)
                 return new FileInfo[0];
 
@@ -231,6 +233,6 @@ namespace Pathways
 
         private string GetTimestampedFileName() => DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
 
-        public override string ToString() => $"Pathway: {PathwayId}, Files: {FileCount}, Full Path: {Path}";
+        public override string ToString() => $"Pathway: {PathwayId}, Files: {FileCount}, Full Path: {FullPath}";
     }
 }

@@ -28,5 +28,13 @@ namespace Pathways
         /// Defaults to "auto_save_".
         /// </remarks>
         public static string AutoSavePrefix { get; set; } = "auto_save_";
+
+        /// <summary>
+        /// Number of auto-save slots to cycle through.
+        /// </summary>
+        /// <remarks>
+        /// Defaults to 3.
+        /// </remarks>
+        public static int AutoSaveSlots { get; set; } = 3;
     }
 }
