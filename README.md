@@ -1,6 +1,6 @@
 # Pathways
 
-A Unity package for managing data file pathways and directories without handling actual data persistence. Perfect for save systems and sessions, user profiles, level data, and any scenario requiring organized file management. Perfect for save systems and sessions, user profiles, level data, and any scenario requiring organized file management.
+A Unity package for managing data file pathways and directories without handling actual data persistence. Perfect for save systems and sessions, user profiles, level data, and any scenario requiring organized file management.
 
 ## Features
 
