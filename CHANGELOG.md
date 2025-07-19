@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.1] - 2025-07-19
+
+### Added
+
+-   `ToggleAutoSave(bool)` overloaded method to `PathwaysManager`.
+
 ## [1.0.0] - 2025-07-18
 
 ### Changed
