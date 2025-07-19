@@ -1,6 +1,6 @@
 {
     "name": "com.tirt.pathways",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "displayName": "Pathways",
     "description": "A Unity package for managing data file pathways and directories without handling actual data persistence. Perfect for save systems and sessions, user profiles, level data, and any scenario requiring organized file management.",
     "unity": "2019.4",

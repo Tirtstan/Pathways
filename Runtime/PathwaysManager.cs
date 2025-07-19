@@ -125,6 +125,12 @@ namespace Pathways
             IsAutoSaveEnabled && CurrentPathway != null && AutoSaveSlots > 0 && AutoSaveInterval > 0f;
 
         /// <summary>
+        /// Toggles auto-saving for the current pathway.
+        /// </summary>
+        /// <param name="enable">To enable or disable auto-saving.</param>
+        public void ToggleAutoSave(bool enable) => IsAutoSaveEnabled = enable;
+
+        /// <summary>
         /// Sets whether auto-saving is enabled for the current pathway.
         /// </summary>
         /// <param name="enable">To enable or disable auto-saving.</param>
