@@ -9,10 +9,20 @@ namespace Pathways
     /// </summary>
     public class Pathway
     {
+        private string pathwayId;
+
         /// <summary>
         /// Unique identifier for the pathway using a directory's name.
         /// </summary>
-        public string PathwayId { get; set; }
+        public string PathwayId
+        {
+            get => pathwayId;
+            set
+            {
+                pathwayId = value;
+                Refresh();
+            }
+        }
         public FileInfo[] Files { get; private set; }
 
         /// <summary>
@@ -101,6 +111,12 @@ namespace Pathways
                     .OrderByDescending(f => f.LastWriteTime)
                     .ToArray() ?? new FileInfo[0];
         }
+
+        /// <summary>
+        /// Gets the path for the most recent save in this pathway (includes auto saves and manual saves).
+        /// </summary>
+        /// <returns>Path to the most recent save file, or null if none exists.</returns>
+        public string GetRecentSavePath() => RecentFile?.FullName;
 
         /// <summary>
         /// Gets the path to the most recent manual save.
@@ -226,12 +242,13 @@ namespace Pathways
                 .ToArray();
         }
 
-        private string GetDefaultFileName() => $"save_{GetTimestampedFileName()}.{PathwaysGlobalConfigs.SaveExtension}";
+        private static string GetDefaultFileName() =>
+            $"save_{GetTimestampedFileName()}.{PathwaysGlobalConfigs.SaveExtension}";
 
-        private string GetAutoSaveFileName(int slot) =>
+        private static string GetAutoSaveFileName(int slot) =>
             $"{PathwaysGlobalConfigs.AutoSavePrefix}{slot}.{PathwaysGlobalConfigs.SaveExtension}";
 
-        private string GetTimestampedFileName() => DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
+        private static string GetTimestampedFileName() => DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
 
         public override string ToString() => $"Pathway: {PathwayId}, Files: {FileCount}, Full Path: {FullPath}";
     }

@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.1.0] - 2025-10-27
+
+### Added
+
+-   `PathwaysManager.GetOrCreateRecentSavePath()` method to retrieve or create a recent save path.
+
+### Changed
+
+-   `PathwaysManager` now auto creates itself in the scene if not found when accessing static instance.
+
 ## [1.0.1] - 2025-07-19
 
 ### Added

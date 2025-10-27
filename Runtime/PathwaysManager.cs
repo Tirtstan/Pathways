@@ -6,9 +6,26 @@ using UnityEngine;
 
 namespace Pathways
 {
+    [DefaultExecutionOrder(-1000)]
     public class PathwaysManager : MonoBehaviour
     {
-        public static PathwaysManager Instance { get; private set; }
+        private static PathwaysManager instance;
+        public static PathwaysManager Instance
+        {
+            get
+            {
+                if (instance == null)
+                {
+                    instance = FindFirstObjectByType<PathwaysManager>();
+                    if (instance == null)
+                    {
+                        var go = new GameObject(nameof(PathwaysManager) + " (Auto Created)");
+                        instance = go.AddComponent<PathwaysManager>();
+                    }
+                }
+                return instance;
+            }
+        }
 
         /// <summary>
         /// Event triggered when an auto-save path is requested. Provides the path for the auto-save file.
@@ -46,25 +63,15 @@ namespace Pathways
         private readonly Dictionary<string, Pathway> loadedPathways = new();
         private float autoSaveTimer;
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        private static void InitializeSingletonOnLoad()
-        {
-            if (FindFirstObjectByType<PathwaysManager>() == null)
-            {
-                var singletonObject = new GameObject(typeof(PathwaysManager).Name);
-                singletonObject.AddComponent<PathwaysManager>();
-            }
-        }
-
         private void Awake()
         {
-            if (Instance != null && Instance != this)
+            if (instance != null && instance != this)
             {
                 Destroy(gameObject);
                 return;
             }
 
-            Instance = this;
+            instance = this;
             DontDestroyOnLoad(gameObject);
 
             Refresh();
@@ -139,21 +146,9 @@ namespace Pathways
         public void ToggleAutoSave(bool enable, int slots = 3, float interval = 300f)
         {
             IsAutoSaveEnabled = enable;
-            SetAutoSaveSlots(slots);
-            SetAutoSaveInterval(interval);
+            AutoSaveSlots = slots;
+            AutoSaveInterval = interval;
         }
-
-        /// <summary>
-        /// Sets the number of auto-save slots to use for the current pathway.
-        /// </summary>
-        /// <param name="slots">The number of auto-save slots to cycle through.</param>
-        public void SetAutoSaveSlots(int slots) => AutoSaveSlots = slots;
-
-        /// <summary>
-        /// Sets the auto-save interval (seconds) to use for the current pathway.
-        /// </summary>
-        /// <param name="interval">The auto-save interval in seconds.</param>
-        public void SetAutoSaveInterval(float interval) => AutoSaveInterval = interval;
 
         /// <summary>
         /// Restarts the auto-save timer.
@@ -164,7 +159,7 @@ namespace Pathways
         /// Sets whether to use unscaled time for auto-saving.
         /// </summary>
         /// <param name="useUnscaled">If true, uses unscaled time for auto-saving; otherwise, uses scaled time.</param>
-        public void SetTime(bool useUnscaled) => UseUnscaledTime = useUnscaled;
+        public void SetTimescale(bool useUnscaled) => UseUnscaledTime = useUnscaled;
 
         /// <summary>
         /// Selects and sets the most recent (last saved to) pathway as the current pathway.
@@ -223,11 +218,27 @@ namespace Pathways
         }
 
         /// <summary>
+        /// Gets the path of the most recent save file in the current pathway. If no save file exists, it generates a new manual save path.
+        /// Ideal for a "Save" button that overwrites the last save or creates a new one.
+        /// </summary>
+        /// <returns>A valid save path, or null if no pathway is current.</returns>
+        public string GetOrCreateRecentSavePath(string fileName = null)
+        {
+            if (CurrentPathway == null)
+                return null;
+
+            if (!string.IsNullOrEmpty(fileName))
+                return CurrentPathway.GetSavePath(fileName);
+
+            return CurrentPathway.GetRecentSavePath() ?? CurrentPathway.GetSavePath();
+        }
+
+        /// <summary>
         /// Gets the path for a manual save in the current pathway.
         /// </summary>
         /// <param name="fileName">Optional filename, defaults to timestamp-based name.</param>
         /// <returns>Full path for the save file, or null if no pathway is current.</returns>
-        public string GetManualSavePath(string fileName = null) => CurrentPathway?.GetSavePath(fileName);
+        public string GetManualSavePath(string fileName) => CurrentPathway?.GetSavePath(fileName);
 
         /// <summary>
         /// Gets the path for an auto-save in the current pathway.
@@ -250,49 +261,6 @@ namespace Pathways
             RefreshCurrentPathway();
             return path;
         }
-
-        /// <summary>
-        /// Gets all save files in the current pathway.
-        /// </summary>
-        /// <returns>Array of FileInfo objects, or empty if no pathway is current.</returns>
-        public FileInfo[] GetAllSaveFiles() => CurrentPathway?.Files ?? new FileInfo[0];
-
-        /// <summary>
-        /// Gets all manual save files in the current pathway.
-        /// </summary>
-        /// <returns>Array of FileInfo objects, or empty if no pathway is current.</returns>
-        public FileInfo[] GetManualSaveFiles() => CurrentPathway?.GetManualSaves() ?? new FileInfo[0];
-
-        /// <summary>
-        /// Gets all auto-save files in the current pathway.
-        /// </summary>
-        /// <returns>Array of FileInfo objects, or empty if no pathway is current.</returns>
-        public FileInfo[] GetAutoSaveFiles() => CurrentPathway?.GetAutoSaves() ?? new FileInfo[0];
-
-        /// <summary>
-        /// Gets the most recent save file info from the current pathway based on last write time.
-        /// </summary>
-        /// <returns>FileInfo of the most recent save file, or null if no pathway is current.</returns>
-        public FileInfo GetRecentSaveFile() => CurrentPathway?.RecentFile ?? null;
-
-        /// <summary>
-        /// Gets the most recent manual save file info.
-        /// </summary>
-        /// <returns>FileInfo of most recent manual save, or null if none exists.</returns>
-        public FileInfo GetRecentManualSaveFile() => CurrentPathway?.GetManualSaves().FirstOrDefault();
-
-        /// <summary>
-        /// Gets the most recent auto-save file info.
-        /// </summary>
-        /// <returns>FileInfo of most recent auto-save, or null if none exists.</returns>
-        public FileInfo GetRecentAutoSaveFile() => CurrentPathway?.GetAutoSaves().FirstOrDefault();
-
-        /// <summary>
-        /// Checks if a file exists in the current pathway.
-        /// </summary>
-        /// <param name="fileName"></param>
-        /// <returns>Whether the file within the current pathway exists.</returns>
-        public bool FileExists(string fileName) => CurrentPathway?.FileExists(fileName) ?? false;
 
         /// <summary>
         /// Deletes the current pathway. If successful, refreshes the pathways list.
@@ -344,5 +312,7 @@ namespace Pathways
         /// </summary>
         /// <returns>Array of Pathway instances.</returns>
         public Pathway[] GetAllPathways() => loadedPathways.Values.ToArray();
+
+        private void OnApplicationQuit() => instance = null;
     }
 }

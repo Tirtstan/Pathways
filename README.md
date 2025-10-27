@@ -16,8 +16,8 @@ A Unity package for managing data file pathways and directories without handling
 
 ## Quick Start
 
-Pathways uses a `PathwaysManager` singleton to manage and interface with the API. It is automatically added to a scene and is configured to `DontDestroyOnLoad`.
-If you want, you can add an instance of it yourself within a given scene.
+Pathways uses a `PathwaysManager` singleton to manage and interface with the API. It is automatically created and added to a scene on first access, and is configured to `DontDestroyOnLoad`.
+If a `PathwaysManager` instance already exists in the scene, the singleton will use that instance instead.
 
 > [!TIP]  
 > `PathwaysManager` inspector view (during runtime) provides useful debug information and tooling.
@@ -36,6 +36,7 @@ Optionally configure basic settings:
 
 ```csharp
 // Set custom storage location (defaults to 'Application.persistentDataPath')
+// The singleton is automatically created on first access
 PathwaysManager.Instance.SetStorageLocation(
     Path.Combine(Application.persistentDataPath, "Saves")
 );
@@ -86,11 +87,11 @@ PathwaysManager.Instance.RefreshCurrentPathway();
 #### Load To Current Pathway
 
 ```csharp
-// Load most recent data file (last written to)
-FileInfo recentFile = PathwaysManager.Instance.GetRecentSaveFile();
-if (recentFile != null)
+// Load most recent data file path (last written to)
+string recentPath = PathwaysManager.Instance.GetRecentSavePath();
+if (string.IsNullOrEmpty(recentPath))
 {
-    string jsonData = File.ReadAllText(recentFile.FullName);
+    string jsonData = File.ReadAllText(recentPath);
     GameData data = JsonUtility.FromJson<GameData>(jsonData);
     ApplyGameData(data);
 }
@@ -244,7 +245,7 @@ public class GameSaveSystem : MonoBehaviour
     {
         PathwaysManager.Instance.SetStorageLocation(
             Path.Combine(Application.persistentDataPath, "Saves")
-        );
+        ); // Refresh pathways
 
         // Create or load pathway
         PathwaysManager.Instance.CreateOrLoadPathway("World1");
@@ -252,40 +253,35 @@ public class GameSaveSystem : MonoBehaviour
 
     private void SetupAutoSave()
     {
-        PathwaysManager.Instance.ToggleAutoSave(true);
-        PathwaysManager.Instance.SetAutoSaveSlots(3);
-        PathwaysManager.Instance.SetAutoSaveInterval(300f); // 5 minutes
-
+        PathwaysManager.Instance.ToggleAutoSave(enable: true, slots: 3, interval: 300f); // Enabled, auto-save files: 3, 5 minutes
         PathwaysManager.Instance.OnAutoSavePathRequested += SaveGameToPath;
     }
 
     public void SaveGame()
     {
-        string savePath = PathwaysManager.Instance.GetManualSavePath();
+        // Gets the most recent save path, or creates a new timestamped one if none exist.
+        string savePath = PathwaysManager.Instance.GetOrCreateRecentSavePath();
         SaveGameToPath(savePath);
-        PathwaysManager.Instance.RefreshCurrentPathway();
+        PathwaysManager.Instance.RefreshCurrentPathway(); // Refresh after saving
     }
 
     public void LoadGame()
     {
-        FileInfo recentSave = PathwaysManager.Instance.GetRecentSaveFile();
-        if (recentSave != null)
-        {
-            LoadGameFromPath(recentSave.FullName);
-        }
+        string recentSavePath = PathwaysManager.Instance.GetOrCreateRecentSavePath();
+        LoadGameFromPath(recentSavePath);
     }
 
-    private void SaveGameToPath(string path)
+    private async void SaveGameToPath(string path)
     {
         // You handle data serialization and persistence using the provided save path
         var gameData = new GameData();
         string json = JsonUtility.ToJson(gameData);
-        File.WriteAllText(path, json);
+        await File.WriteAllTextAsync(path, json);
     }
 
-    private void LoadGameFromPath(string path)
+    private async void LoadGameFromPath(string path)
     {
-        string json = File.ReadAllText(path);
+        string json = await File.ReadAllTextAsync(path);
         GameData gameData = JsonUtility.FromJson<GameData>(json);
         ApplyGameData(gameData);
     }

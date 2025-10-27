@@ -204,11 +204,11 @@ namespace Pathways.Editor
 
                 if (manager.CurrentPathway != null)
                 {
-                    if (GUILayout.Button("Copy Manual Save Path", buttonStyle))
+                    if (GUILayout.Button("Copy Recent Save Path", buttonStyle))
                     {
-                        string path = manager.GetManualSavePath();
+                        string path = manager.GetOrCreateRecentSavePath();
                         EditorGUIUtility.systemCopyBuffer = path;
-                        Debug.Log($"Copied manual save path to clipboard: {path}");
+                        Debug.Log($"Copied recent save path to clipboard: {path}");
                     }
 
                     if (GUILayout.Button("Copy Auto Save Path", buttonStyle))
