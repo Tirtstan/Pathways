@@ -1,8 +1,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Pathways;
+using Tirt.Pathways;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class SaveManager : MonoBehaviour
 {
@@ -12,31 +13,53 @@ public class SaveManager : MonoBehaviour
 
     private void Awake()
     {
-        PathwaysManager.Instance.OnAutoSavePathRequested += OnAutoDataPathRequested;
+        // 1. Configure the static Pathways configurations (default: Application.persistentDataPath)
+        Pathways.StorageLocation = Path.Combine(Application.persistentDataPath, "Saves");
 
-        PathwaysManager.Instance.ToggleAutoSave(enable: true, slots: 3, interval: 300f);
-        PathwaysManager.Instance.SetStorageLocation(Path.Combine(Application.persistentDataPath, "Saves"));
+        // 2. Load our save profile. All path operations will work relative to this active profile.
+        Pathways.LoadProfile("Spire Coast");
+
+        // 3. Register the auto-save event and enable the system
+        Pathways.OnAutoSavePathRequested += OnAutoDataPathRequested;
+        Pathways.EnableAutoSave(interval: 300f, slots: 3);
     }
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.R))
-            SelectRecentPathway();
+#if ENABLE_INPUT_SYSTEM
+        // Select the most recently modified profile
+        if (Keyboard.current.rKey.wasPressedThisFrame)
+            SelectRecentProfile();
 
-        if (Input.GetKeyDown(KeyCode.C))
+        // Spawn some random items to save
+        if (Keyboard.current.cKey.wasPressedThisFrame)
             CreateRandomItems();
 
-        if (Input.GetKeyDown(KeyCode.S))
-            SaveGameData();
+        // Manual Save (creates a new timestamped file)
+        if (Keyboard.current.sKey.wasPressedThisFrame)
+            SaveGameData(Pathways.GetPath(SaveType.Manual));
 
-        if (Input.GetKeyDown(KeyCode.L))
-            LoadGameData();
+        // Manual Load (loads the most recent save file of any type)
+        if (Keyboard.current.lKey.wasPressedThisFrame)
+            LoadGameData(Pathways.GetLatest());
+
+        // Quick Save (creates or overwrites a single dedicated quicksave file)
+        if (Keyboard.current.qKey.wasPressedThisFrame)
+            SaveGameData(Pathways.GetPath(SaveType.QuickSave));
+#endif
     }
 
-    private void SelectRecentPathway()
+    private void SelectRecentProfile()
     {
-        Pathway pathway = PathwaysManager.Instance.SelectRecentPathway();
-        Debug.Log($"Selected Recent Pathway: {pathway}");
+        SaveProfile profile = Pathways.SelectRecentProfile();
+        if (profile != null)
+        {
+            Debug.Log($"Switched to most recent SaveProfile: {profile.ProfileId}");
+        }
+        else
+        {
+            Debug.LogWarning("No recent save profile found.");
+        }
     }
 
     private void CreateRandomItems()
@@ -47,60 +70,41 @@ public class SaveManager : MonoBehaviour
             item.RandomiseProperties();
         }
 
-        Debug.Log("Created 10 random items");
+        Debug.Log("Created 10 random items in scene");
     }
 
     private void OnAutoDataPathRequested(string autoDataPath)
     {
         SaveDataToPath(autoDataPath);
-        Debug.Log($"Auto-saved data to: {autoDataPath}");
+        Debug.Log($"Auto-saved game state to: {autoDataPath}");
     }
 
-    public void SaveGameData(string fileName = null)
+    public void SaveGameData(string targetPath)
     {
-        string dataPath = PathwaysManager.Instance.GetManualSavePath(fileName);
-        SaveDataToPath(dataPath);
-        PathwaysManager.Instance.RefreshCurrentPathway();
-
-        Debug.Log($"Manually saved data to: {dataPath} | Pathway: {PathwaysManager.Instance.CurrentPathway}");
-    }
-
-    public void LoadGameData(string fileName = null)
-    {
-        string loadPath = GetLoadPath(fileName);
-        if (string.IsNullOrEmpty(loadPath))
+        if (string.IsNullOrEmpty(targetPath))
+        {
+            Debug.LogError("Save failed: Target path is null or empty. Ensure a save profile is active.");
             return;
+        }
+
+        SaveDataToPath(targetPath);
+        Pathways.ActiveProfile?.Refresh(); // Refresh the profile so it updates its file lists immediately
+
+        Debug.Log($"Saved game data to: {targetPath} | Active Profile: {Pathways.ActiveProfile}");
+    }
+
+    public void LoadGameData(string loadPath)
+    {
+        if (string.IsNullOrEmpty(loadPath) || !File.Exists(loadPath))
+        {
+            Debug.LogWarning($"Load failed: No save file found at path '{loadPath}'");
+            return;
+        }
 
         LevelData levelData = LoadDataFromPath(loadPath);
         ApplyLevelData(levelData);
 
-        Debug.Log($"Loaded data from: {loadPath} with Items: {levelData?.SaveData?.Length}");
-    }
-
-    private string GetLoadPath(string fileName)
-    {
-        if (string.IsNullOrEmpty(fileName))
-        {
-            FileInfo recentData = PathwaysManager.Instance.GetRecentSaveFile();
-            if (recentData == null)
-            {
-                Debug.LogWarning("No data file found!");
-                return null;
-            }
-
-            return recentData.FullName;
-        }
-        else
-        {
-            string loadPath = PathwaysManager.Instance.GetManualSavePath(fileName);
-            if (!File.Exists(loadPath))
-            {
-                Debug.LogWarning($"Data file not found: {fileName}");
-                return null;
-            }
-
-            return loadPath;
-        }
+        Debug.Log($"Loaded game data from: {loadPath} | Spawned Items: {levelData?.SaveData?.Length ?? 0}");
     }
 
     private void SaveDataToPath(string path)
@@ -124,6 +128,9 @@ public class SaveManager : MonoBehaviour
     private void ApplyLevelData(LevelData levelData)
     {
         ClearExistingItems();
+
+        if (levelData?.SaveData == null)
+            return;
 
         foreach (var itemData in levelData.SaveData)
         {
@@ -153,6 +160,6 @@ public class SaveManager : MonoBehaviour
 
     private void OnDestroy()
     {
-        PathwaysManager.Instance.OnAutoSavePathRequested -= OnAutoDataPathRequested;
+        Pathways.OnAutoSavePathRequested -= OnAutoDataPathRequested;
     }
 }
